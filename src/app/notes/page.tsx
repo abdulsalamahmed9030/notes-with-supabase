@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import AuthForm from "@/components/AuthForm";
 import type { Session } from "@supabase/supabase-js";
+import NotesList from "@/components/NotesList";
 
 type Note = {
   id: string;
@@ -36,7 +37,7 @@ export default function NotesPage() {
     };
   }, []);
 
-  // Fetch notes for current user
+  // Fetch notes
   async function fetchNotes(userId: string) {
     const { data, error } = await supabase
       .from("notes")
@@ -49,7 +50,6 @@ export default function NotesPage() {
     }
   }
 
-  // Refresh notes when session changes
   useEffect(() => {
     if (session?.user?.id) {
       void fetchNotes(session.user.id);
@@ -61,7 +61,6 @@ export default function NotesPage() {
     if (!newNote.trim() || !session?.user?.id) return;
 
     const userId = session.user.id;
-
     const { error } = await supabase.from("notes").insert([
       {
         content: newNote,
@@ -78,7 +77,6 @@ export default function NotesPage() {
   // Delete a note
   async function deleteNote(id: string) {
     if (!session?.user?.id) return;
-
     const userId = session.user.id;
 
     const { error } = await supabase.from("notes").delete().eq("id", id);
@@ -89,59 +87,79 @@ export default function NotesPage() {
 
   // Loading state
   if (loading) {
-    return <p className="text-center p-6">Loading...</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500">
+        <p className="text-white text-lg animate-pulse">Loading...</p>
+      </div>
+    );
   }
 
-  // Not logged in → show auth form
+  // Not logged in
   if (!session) {
-    return <AuthForm onAuth={async () => {}} />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500">
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-xl p-8 w-full max-w-md">
+          <AuthForm onAuth={async () => {}} />
+        </div>
+      </div>
+    );
   }
 
-  // Logged in → show notes
+  // Logged in
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">📝 My Notes</h1>
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="bg-gray-200 px-3 py-1 rounded"
-        >
-          Logout
-        </button>
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        <input
-          className="border p-2 flex-1 rounded"
-          type="text"
-          placeholder="Write a note..."
-          value={newNote}
-          onChange={(e) => setNewNote(e.target.value)}
-        />
-        <button
-          onClick={addNote}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Add
-        </button>
-      </div>
-
-      <ul className="space-y-2">
-        {notes.map((note) => (
-          <li
-            key={note.id}
-            className="border p-2 rounded bg-gray-50 flex justify-between items-center"
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 p-6">
+      <div className="max-w-xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-white drop-shadow">
+            📝 My Notes
+          </h1>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="bg-white/80 text-gray-800 px-4 py-2 rounded-xl font-medium shadow hover:bg-white transition"
           >
-            <span>{note.content}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              className="text-red-500 hover:text-red-700 font-bold"
+            Logout
+          </button>
+        </div>
+
+        {/* Input */}
+        <div className="flex gap-3 mb-6">
+          <input
+            className="flex-1 p-3 rounded-xl border border-gray-200 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-400"
+            type="text"
+            placeholder="Write a note..."
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+          />
+          <button
+            onClick={addNote}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl shadow font-medium transition"
+          >
+            Add
+          </button>
+        </div>
+
+        {/* Notes List */}
+        <ul className="space-y-4">
+          {notes.map((note) => (
+            <li
+              key={note.id}
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-white/30 p-4 rounded-2xl shadow-md flex justify-between items-center hover:shadow-lg transition"
             >
-              🗑️
-            </button>
-          </li>
-        ))}
-      </ul>
+              <span className="text-gray-800 dark:text-gray-100">
+                {note.content}
+              </span>
+              <button
+                onClick={() => deleteNote(note.id)}
+                className="text-red-500 hover:text-red-700 transition"
+              >
+                🗑️
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <NotesList />
     </div>
   );
 }
