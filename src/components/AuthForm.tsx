@@ -20,18 +20,12 @@ export default function AuthForm({ onAuth }: AuthFormProps) {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setErrorMsg(error.message);
-    } else {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setErrorMsg(error.message);
+    else {
       setSuccessMsg("Logged in successfully ✅");
       await onAuth();
     }
-
     setLoading(false);
   }
 
@@ -41,18 +35,12 @@ export default function AuthForm({ onAuth }: AuthFormProps) {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      setErrorMsg(error.message);
-    } else {
-      setSuccessMsg("Signup successful! Check your email to confirm.");
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) setErrorMsg(error.message);
+    else {
+      setSuccessMsg("Signup successful! Check your email 📧");
       await onAuth();
     }
-
     setLoading(false);
   }
 
@@ -62,70 +50,90 @@ export default function AuthForm({ onAuth }: AuthFormProps) {
     setSuccessMsg(null);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "http://localhost:3000/reset-password", // ⚡ adjust in prod
+      redirectTo: "http://localhost:3000/reset-password",
     });
 
-    if (error) {
-      setErrorMsg(error.message);
-    } else {
-      setSuccessMsg("Password reset link sent to your email 📧");
-    }
+    if (error) setErrorMsg(error.message);
+    else setSuccessMsg("Password reset link sent! 📧");
 
     setLoading(false);
   }
 
   return (
-    <form
-      onSubmit={handleLogin} // default submit = login
-      className="space-y-4 max-w-sm mx-auto"
-    >
-      <input
-        type="email"
-        className="border p-2 w-full rounded"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-400 p-4">
+      <form className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full space-y-6 animate-fadeIn" onSubmit={handleLogin}>
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 text-center">Secure Notes</h2>
 
-      <input
-        type="password"
-        className="border p-2 w-full rounded"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
+        {/* Email */}
+        <div className="relative">
+          <input
+            type="email"
+            id="email"
+            className="peer placeholder-transparent border-b-2 border-gray-300 focus:border-blue-500 w-full p-2 text-gray-900 dark:text-gray-100 bg-transparent outline-none transition"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <label
+            htmlFor="email"
+            className="absolute left-0 -top-3.5 text-gray-600 dark:text-gray-400 text-sm transition-all peer-placeholder-shown:top-2 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm"
+          >
+            Email
+          </label>
+        </div>
 
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded flex-1"
-        >
-          {loading ? "Loading..." : "Login"}
-        </button>
+        {/* Password */}
+        <div className="relative">
+          <input
+            type="password"
+            id="password"
+            className="peer placeholder-transparent border-b-2 border-gray-300 focus:border-blue-500 w-full p-2 text-gray-900 dark:text-gray-100 bg-transparent outline-none transition"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <label
+            htmlFor="password"
+            className="absolute left-0 -top-3.5 text-gray-600 dark:text-gray-400 text-sm transition-all peer-placeholder-shown:top-2 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:-top-3.5 peer-focus:text-gray-600 peer-focus:text-sm"
+          >
+            Password
+          </label>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-gradient-to-r from-blue-500 to-blue-700 hover:scale-105 transition-transform text-white py-2 rounded-xl font-semibold shadow-md"
+          >
+            {loading ? "Loading..." : "Login"}
+          </button>
+          <button
+            type="button"
+            onClick={handleSignup}
+            disabled={loading}
+            className="flex-1 bg-gradient-to-r from-green-500 to-green-700 hover:scale-105 transition-transform text-white py-2 rounded-xl font-semibold shadow-md"
+          >
+            Signup
+          </button>
+        </div>
+
         <button
           type="button"
-          onClick={handleSignup}
-          disabled={loading}
-          className="bg-green-500 text-white px-4 py-2 rounded flex-1"
+          onClick={handleResetPassword}
+          disabled={!email || loading}
+          className="w-full text-center text-sm text-blue-600 dark:text-blue-400 underline mt-2"
         >
-          Signup
+          Forgot password?
         </button>
-      </div>
 
-      <button
-        type="button"
-        onClick={handleResetPassword}
-        disabled={!email || loading}
-        className="text-sm text-blue-600 underline"
-      >
-        Forgot password?
-      </button>
-
-      {errorMsg && <p className="text-red-500">{errorMsg}</p>}
-      {successMsg && <p className="text-green-600">{successMsg}</p>}
-    </form>
+        {/* Messages */}
+        {errorMsg && <p className="text-red-500 text-center">{errorMsg}</p>}
+        {successMsg && <p className="text-green-600 text-center">{successMsg}</p>}
+      </form>
+    </div>
   );
 }
